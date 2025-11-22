@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Timer</title>
+<style>
+  body { font-family: Arial, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.3s, color 0.3s; }
+  body.light { background-color: #ffffff; color: #000000; }
+  body.dark { background-color: #121212; color: #ffffff; }
+  h1 { font-size: 2em; margin-bottom: 20px; }
+  #timer { font-size: 3em; margin: 20px 0; }
+  button { padding: 10px 20px; font-size: 1.2em; cursor: pointer; margin: 5px; }
+  #toggleMode { position: fixed; bottom: 20px; right: 20px; padding: 10px 15px; cursor: pointer; border: none; font-size: 1em; border-radius: 5px; }
+  #settingsIcon { position: fixed; top: 20px; left: 20px; font-size: 28px; cursor: pointer; }
+  #settingsPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 10px; display: none; }
+  body.light #settingsPanel { background: rgba(211,211,211,0.8); color: black; }
+  #closeSettings { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; }
+  #progressContainer { width: 80%; height: 20px; background: grey; margin-top: 20px; border-radius: 10px; display: none; }
+  #progressBar { height: 100%; width: 0%; background: lightblue; border-radius: 10px; }
+</style>
+</head>
+<body class="light">
+
+<div id="settingsIcon">⛭</div>
+
+<h1 id="title">Study Timer</h1>
+<div id="timer">00:00</div>
+<div id="progressContainer"><div id="progressBar"></div></div>
+
+<div>
+  <button id="startButton">Start</button>
+  <button id="pauseButton">Pause</button>
+</div>
+<button id="toggleMode">Dark Mode</button>
+
+<div id="settingsPanel">
+  <div id="closeSettings">✖</div>
+  <h3>Settings</h3>
+  <label><input type="checkbox" id="toggleProgress"> Show Progress Bar</label>
+</div>
+
+<script>
+const schedule = [
+  { title: "English - Module 1", minutes: 32 },
+  { title: "English - Module 2", minutes: 32 },
+  { title: "Break", minutes: 10 },
+  { title: "Math - Module 1", minutes: 35 },
+  { title: "Math - Module 2", minutes: 35 },
+];
+
+let currentIndex = 0;
+let interval;
+let secondsLeft = 0;
+let totalSeconds = 0;
+let isPaused = false;
+
+const titleEl = document.getElementById('title');
+const timerEl = document.getElementById('timer');
+const startButton = document.getElementById('startButton');
+const pauseButton = document.getElementById('pauseButton');
+const toggleMode = document.getElementById('toggleMode');
+const bodyEl = document.body;
+const settingsIcon = document.getElementById('settingsIcon');
+const settingsPanel = document.getElementById('settingsPanel');
+const closeSettings = document.getElementById('closeSettings');
+const toggleProgress = document.getElementById('toggleProgress');
+const progressContainer = document.getElementById('progressContainer');
+const progressBar = document.getElementById('progressBar');
+
+settingsIcon.addEventListener('click', () => settingsPanel.style.display = 'block');
+closeSettings.addEventListener('click', () => settingsPanel.style.display = 'none');
+
+toggleProgress.addEventListener('change', () => {
+  progressContainer.style.display = toggleProgress.checked ? 'block' : 'none';
+});
+
+function startTimer(minutes) {
+  secondsLeft = minutes * 60;
+  totalSeconds = secondsLeft;
+  updateTimerDisplay(secondsLeft);
+  updateProgressBar();
+
+  interval = setInterval(() => {
+    if (!isPaused) {
+      secondsLeft--;
+      updateTimerDisplay(secondsLeft);
+      updateProgressBar();
+
+      if (secondsLeft <= 0) {
+        clearInterval(interval);
+        notifyUser(schedule[currentIndex].title + " is finished!");
+        currentIndex++;
+        if (currentIndex < schedule.length) {
+          startNextTimer();
+        } else {
+          startButton.textContent = "Restart";
+          startButton.style.display = "inline-block";
+        }
+      }
+    }
+  }, 1000);
+}
+
+function startNextTimer() {
+  titleEl.textContent = schedule[currentIndex].title;
+  startTimer(schedule[currentIndex].minutes);
+}
+
+function updateTimerDisplay(seconds) {
+  const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const secs = String(seconds % 60).padStart(2, '0');
+  timerEl.textContent = `${mins}:${secs}`;
+}
+
+function updateProgressBar() {
+  const percent = 100 - (secondsLeft / totalSeconds * 100);
+  progressBar.style.width = percent + '%';
+}
+
+function notifyUser(message) {
+  alert(message);
+}
+
+startButton.addEventListener('click', () => {
+  startButton.style.display = 'none';
+  currentIndex = 0;
+  isPaused = false;
+  startNextTimer();
+});
+
+pauseButton.addEventListener('click', () => {
+  isPaused = !isPaused;
+  pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
+});
+
+toggleMode.addEventListener('click', () => {
+  if(bodyEl.classList.contains('light')) {
+    bodyEl.classList.replace('light', 'dark');
+    toggleMode.textContent = 'Light Mode';
+    settingsIcon.textContent = '⛭';
+  } else {
+    bodyEl.classList.replace('dark', 'light');
+    toggleMode.textContent = 'Dark Mode';
+    settingsIcon.textContent = '⛭';
+  }
+});
+</script>
+
+</body>
+</html>
